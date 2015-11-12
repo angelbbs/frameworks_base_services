@@ -1143,7 +1143,7 @@ void CursorButtonAccumulator::process(const RawEvent* rawEvent) {
             mBtnLeft = rawEvent->value;
             break;
         case BTN_RIGHT:
-            mBtnRight = rawEvent->value;
+            mBtnBack = rawEvent->value;
             break;
         case BTN_MIDDLE:
             mBtnMiddle = rawEvent->value;
