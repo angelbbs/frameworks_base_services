@@ -3825,22 +3825,27 @@ public class WindowManagerService extends IWindowManager.Stub
         long ident = Binder.clearCallingIdentity();
         try {
             int req = getOrientationFromWindowsLocked();
-            if (req == ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) {
-                req = getOrientationFromAppTokensLocked();
-            }
+//            if (req == ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) {
+//                req = getOrientationFromAppTokensLocked();
+//            }
 
-            if (req != mForcedAppOrientation) {
-                mForcedAppOrientation = req;
+//            if (req != mForcedAppOrientation) {
+//                mForcedAppOrientation = req;
                 //send a message to Policy indicating orientation change to take
                 //action like disabling/enabling sensors etc.,
-                mPolicy.setCurrentOrientationLw(req);
-                if (updateRotationUncheckedLocked(inTransaction)) {
-                    // changed
-                    return true;
-                }
-            }
+//                mPolicy.setCurrentOrientationLw(req);
+//                if (updateRotationUncheckedLocked(inTransaction)) {
+//                    // changed
+//                    return true;
+//                }
+//            }
 
-            return false;
+//            return false;
+        req = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+                mForcedAppOrientation = req;
+        mPolicy.setCurrentOrientationLw(req);
+    return true;
+
         } finally {
             Binder.restoreCallingIdentity(ident);
         }
