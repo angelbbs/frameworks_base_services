@@ -1366,7 +1366,7 @@ mScreenOffTimeoutSetting =  10 * 1000;
 
         final long ident = Binder.clearCallingIdentity();
         try {
-            goToSleepInternal(eventTime, reason);
+//            goToSleepInternal(eventTime, reason);
         } finally {
             Binder.restoreCallingIdentity(ident);
         }
