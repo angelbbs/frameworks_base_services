@@ -26,6 +26,11 @@ import android.util.Slog;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.*;
+import java.net.*;
+import java.util.List;
+import java.util.Properties;
+
 
 public class LightsService {
     private static final String TAG = "LightsService";
@@ -47,6 +52,14 @@ public class LightsService {
     public static final int LIGHT_FLASH_NONE = 0;
     public static final int LIGHT_FLASH_TIMED = 1;
     public static final int LIGHT_FLASH_HARDWARE = 2;
+    public static Socket sc;
+    public static InputStream is;
+    public static OutputStream os;
+    public static InetAddress localSvr;
+    public static int m_serverPort = 9010;
+    public static int m_myPort = 9061;
+    public static DatagramSocket socket;
+
 
     /**
      * Light brightness is managed by a user setting.
@@ -73,6 +86,10 @@ public class LightsService {
         public void setBrightness(int brightness, int brightnessMode) {
             synchronized (this) {
                 int color = brightness & 0x000000ff;
+        if (brightnessMode == 0 && ( brightness != 0 && brightness != 255 ) )
+        {
+        SendBrightnessToMCU(brightness);
+        }
                 color = 0xff000000 | (color << 16) | (color << 8) | color;
                 setLightLocked(color, LIGHT_FLASH_NONE, 0, 0, brightnessMode);
             }
@@ -178,6 +195,7 @@ public class LightsService {
         for (int i = 0; i < LIGHT_ID_COUNT; i++) {
             mLights[i] = new Light(i);
         }
+       CreateSocket();
     }
 
     protected void finalize() throws Throwable {
@@ -206,4 +224,117 @@ public class LightsService {
     private final Context mContext;
 
     private int mNativePointer;
+
+    //************************************************
+    public static boolean CreateSocket()
+    {
+
+        while (localSvr == null)
+            try
+            {
+                localSvr = InetAddress.getByName("127.0.0.1");
+            }
+            catch (Exception localException)
+            {
+                localException.getMessage();
+                if (DEBUG) Slog.v(TAG, "local InetAddress err:" + localException.getMessage());
+                try
+                {
+                    Thread.sleep(1000L);
+                }
+                catch (InterruptedException localInterruptedException)
+                {
+                    localInterruptedException.printStackTrace();
+                }
+            }
+        try
+        {
+            InetSocketAddress localInetSocketAddress = new InetSocketAddress("127.0.0.1", m_myPort);
+            socket = new DatagramSocket(null);
+            socket.setReuseAddress(true);
+            socket.bind(localInetSocketAddress);
+            socket.setSoTimeout(0);
+            if (DEBUG) Slog.v(TAG, "create socket in " + m_myPort);
+            return true;
+        }
+        catch (SocketException localSocketException)
+        {
+            localSocketException.printStackTrace();
+            Slog.v(TAG, "create socket err:" + localSocketException.getMessage() + " port:" + m_myPort);
+        }
+        return false;
+    }
+    //*******************************************
+    public static void SendBrightnessToMCU(int brightness)
+    {
+      byte[] var2 = new byte[7];
+         var2[0] = -86;
+         var2[1] = 4;
+         var2[2] = 73;
+         var2[3] = -95;
+         int br = (int)brightness/8;
+         var2[4] = (byte)br;
+         var2[5] = (byte)(var2[1] + var2[2] + var2[3] + var2[4]);
+         var2[6] = 85;
+
+        DatagramPacket localDatagramPacket = new DatagramPacket(var2, var2.length, localSvr, m_serverPort);
+        String var4 = byteArrToHexStr(var2);
+
+        try
+        {
+            if (DEBUG) Slog.v(TAG, "arm->mcu: " + var4);
+            if (DEBUG) Slog.v(TAG, "Set brightness: " + brightness + "Set br: " + br);
+            socket.send(localDatagramPacket);
+            return;
+        }
+        catch (Exception localException)
+        {
+            localException.printStackTrace();
+            Slog.v(TAG, "Send packet to MCU fail: " + localException.getMessage());
+        }
+    }
+    //********************************************
+
+    public static byte[] hexStringTobyte(String paramString)
+    {
+        int i = paramString.length() / 2;
+        byte[] arrayOfByte = new byte[i];
+        char[] arrayOfChar = paramString.toCharArray();
+        for (int j = 0; ; j++)
+        {
+            if (j >= i)
+                return arrayOfByte;
+            int k = j * 2;
+            arrayOfByte[j] = ((byte)(tobyte(arrayOfChar[k]) << 4 | tobyte(arrayOfChar[(k + 1)])));
+        }
+    }
+    private static byte tobyte(char paramChar)
+    {
+        return (byte)"0123456789abcdef".indexOf(paramChar);
+    }
+
+   public static String byteArrToHexStr(byte[] var0) {
+      StringBuilder var1 = new StringBuilder("");
+
+      for(int var2 = 0; var2 < var0.length; ++var2) {
+         byte var10000 = var0[var2];
+         int var4 = 15 & var0[var2] >> 4;
+         int var5 = 15 & var0[var2];
+         if(var4 >= 10) {
+            var1.append((char)(65 + (var4 - 10)));
+         } else {
+            var1.append(var4);
+         }
+
+         if(var5 >= 10) {
+            var1.append((char)(65 + (var5 - 10)));
+         } else {
+            var1.append(var5);
+         }
+      }
+
+      return var1.toString();
+   }
+
+
 }
