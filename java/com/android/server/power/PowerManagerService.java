@@ -636,9 +636,10 @@ public final class PowerManagerService extends IPowerManager.Stub
                 Settings.Secure.SCREENSAVER_ACTIVATE_ON_DOCK,
                 mDreamsActivatedOnDockByDefaultConfig ? 1 : 0,
                 UserHandle.USER_CURRENT) != 0);
-        mScreenOffTimeoutSetting = Settings.System.getIntForUser(resolver,
-                Settings.System.SCREEN_OFF_TIMEOUT, DEFAULT_SCREEN_OFF_TIMEOUT,
-                UserHandle.USER_CURRENT);
+//        mScreenOffTimeoutSetting = Settings.System.getIntForUser(resolver,
+//                Settings.System.SCREEN_OFF_TIMEOUT, DEFAULT_SCREEN_OFF_TIMEOUT,
+//                UserHandle.USER_CURRENT);
+mScreenOffTimeoutSetting =  10 * 1000;
         mStayOnWhilePluggedInSetting = Settings.Global.getInt(resolver,
                 Settings.Global.STAY_ON_WHILE_PLUGGED_IN, BatteryManager.BATTERY_PLUGGED_AC);
         mWakeUpWhenPluggedOrUnpluggedSetting = Settings.Global.getInt(resolver,
@@ -1721,53 +1722,9 @@ public final class PowerManagerService extends IPowerManager.Stub
                 final int screenDimDuration = getScreenDimDurationLocked(screenOffTimeout);
 
                 mUserActivitySummary = 0;
-                if (mLastUserActivityTime >= mLastWakeTime) {
-                    nextTimeout = mLastUserActivityTime
-                            + screenOffTimeout - screenDimDuration;
-                    if (now < nextTimeout) {
-                        int buttonBrightness, keyboardBrightness;
-                        if (mButtonBrightnessOverrideFromWindowManager >= 0) {
-                            buttonBrightness = mButtonBrightnessOverrideFromWindowManager;
-                            keyboardBrightness = mButtonBrightnessOverrideFromWindowManager;
-                        } else {
-                            buttonBrightness = mButtonBrightness;
-                            keyboardBrightness = mKeyboardBrightness;
-                        }
 
-                        mKeyboardLight.setBrightness(mKeyboardVisible ? keyboardBrightness : 0);
-                        if (mButtonTimeout != 0 && now > mLastUserActivityTime + mButtonTimeout) {
-                            mButtonsLight.setBrightness(0);
-                        } else {
-                            mButtonsLight.setBrightness(buttonBrightness);
-                            if (buttonBrightness != 0 && mButtonTimeout != 0) {
-                                nextTimeout = now + mButtonTimeout;
-                            }
-                        }
+                if (mLastUserActivityTime >= mLastWakeTime) {
                         mUserActivitySummary |= USER_ACTIVITY_SCREEN_BRIGHT;
-                    } else {
-                        nextTimeout = mLastUserActivityTime + screenOffTimeout;
-                        if (now < nextTimeout) {
-                            mButtonsLight.setBrightness(0);
-                            mKeyboardLight.setBrightness(0);
-                            mUserActivitySummary |= USER_ACTIVITY_SCREEN_DIM;
-                        }
-                    }
-                }
-                if (mUserActivitySummary == 0
-                        && mLastUserActivityTimeNoChangeLights >= mLastWakeTime) {
-                    nextTimeout = mLastUserActivityTimeNoChangeLights + screenOffTimeout;
-                    if (now < nextTimeout
-                            && mDisplayPowerRequest.screenState
-                                    != DisplayPowerRequest.SCREEN_STATE_OFF) {
-                        mUserActivitySummary = mDisplayPowerRequest.screenState
-                                == DisplayPowerRequest.SCREEN_STATE_BRIGHT ?
-                                USER_ACTIVITY_SCREEN_BRIGHT : USER_ACTIVITY_SCREEN_DIM;
-                    }
-                }
-                if (mUserActivitySummary != 0) {
-                    Message msg = mHandler.obtainMessage(MSG_USER_ACTIVITY_TIMEOUT);
-                    msg.setAsynchronous(true);
-                    mHandler.sendMessageAtTime(msg, nextTimeout);
                 }
             } else {
                 mUserActivitySummary = 0;
