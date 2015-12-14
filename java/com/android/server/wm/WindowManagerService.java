@@ -6927,7 +6927,8 @@ public class WindowManagerService extends IWindowManager.Stub
             }
             if (hardKeyboardAvailable != mHardKeyboardAvailable) {
                 mHardKeyboardAvailable = hardKeyboardAvailable;
-                mHardKeyboardEnabled = hardKeyboardAvailable;
+//                mHardKeyboardEnabled = hardKeyboardAvailable;
+                mHardKeyboardEnabled = false;
                 mH.removeMessages(H.REPORT_HARD_KEYBOARD_STATUS_CHANGE);
                 mH.sendEmptyMessage(H.REPORT_HARD_KEYBOARD_STATUS_CHANGE);
             }
